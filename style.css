@@ -1,0 +1,13 @@
+article.phonebook {
+  -webkit-column-width: 200px;
+  -moz-column-width: 200px;
+  column-width: 200px;
+}
+
+article.phonebook div span:first-of-type  {
+  padding-right: 10px;
+}
+
+article.phonebook div span:last-of-type  {
+  text-align: right;
+}
