@@ -1,17 +1,18 @@
 var _LOCAL_PEOPLE_RESULT_ID = 'B09A7990-05EA-4AF9-81EF-EDFAB16C4E31';
 var arrStaff = [];
+var prop;
 var context = new SP.ClientContext.get_current();
 var web = context.get_web();
 var user = web.get_currentUser();
 
 $(document).ready(function() {
   // If the window has been resized
-  $(window).resize(function() {
-  });
+  $(window).resize(function() {});
 
   context.load(user);
   context.executeQueryAsync(function() {
     console.log(user);
+    getStaffPhones();
   }, function() {
     alert("Connection Failed. Refresh the page and try again. :(");
   });
@@ -44,10 +45,26 @@ function refreshPhonebook() {
     return;
 
   for (var i = 0; i < arrStaff.length; i++) {
-    var entry = $("<div/>", {
-      html: '<span>' + arrStaff[i].Name + '</span><span>' + arrStaff[i].CellPhone + '</span>'});
+    if (arrStaff[i].CellPhone != null && arrStaff[i].CellPhone != '') {
+      var cellphones = $("<div/>", {
+        html: '<div>' + arrStaff[i].Name + '</div><div>' + arrStaff[i].CellPhone + '</div>'
+      });
+      $("#cellphone article.phonebook").append(cellphones);
+    }
 
-    $("article.phonebook").append(entry);
+    if (arrStaff[i].HomePhone != null && arrStaff[i].HomePhone != '') {
+      var homephones = $("<div/>", {
+        html: '<div>' + arrStaff[i].Name + '</div><div>' + arrStaff[i].HomePhone + '</div>'
+      });
+      $("#homephone article.phonebook").append(homephones);
+    }
+
+    if (arrStaff[i].WorkPhone != null && arrStaff[i].WorkPhone != '') {
+      var workphones = $("<div/>", {
+        html: '<div>' + arrStaff[i].Name + '</div><div>' + arrStaff[i].WorkPhone + '</div>'
+      });
+      $("#workphone article.phonebook").append(workphones);
+    }
   }
 }
 
@@ -70,22 +87,15 @@ function onQueryFailedJSON(data, errorCode, errorMessage) {
 
 // Get phone numbers of all staff
 function getStaffPhones() {
-  searchTerm = '(JobTitle:"a*" JobTitle:"b*" JobTitle:"c*" JobTitle:"d*" JobTitle:"e*"' +
-    'JobTitle:"f*" JobTitle:"g*" JobTitle:"h*" JobTitle:"i*" JobTitle:"j*"' +
-    'JobTitle:"k*" JobTitle:"l*" JobTitle:"m*" JobTitle:"n*" JobTitle:"o*"' +
-    'JobTitle:"p*" JobTitle:"q*" JobTitle:"r*" JobTitle:"s*" JobTitle:"t*"' +
-    'JobTitle:"u*" JobTitle:"v*" JobTitle:"w*" JobTitle:"x*" JobTitle:"y*"' +
-    'JobTitle:"z*" JobTitle:"0*" JobTitle:"1*" JobTitle:"2*" JobTitle:"3*"' +
-    'JobTitle:"4*" JobTitle:"5*" JobTitle:"6*" JobTitle:"7*" JobTitle:"8*"' +
-    'JobTitle:"9*")';
+  searchTerm = '(JobTitle:"Support" JobTitle:"Servicing")';
   searchUrl = _spPageContextInfo.webAbsoluteUrl +
     "/_api/search/query?querytext='" + searchTerm +
     "'&sortlist='PreferredName:ascending'&" +
-    "selectproperties='PreferredName,WorkPhone,CellPhone,HomePhone'&" +
+    "selectproperties='PreferredName,AccountName,WorkPhone'&" +
     "sourceid='" + _LOCAL_PEOPLE_RESULT_ID + "'&" +
-    "rowlimit='100'";
+    "rowlimit='400'";
 
-  //console.log(searchUrl);
+  console.log(searchUrl);
 
   $.ajax({
     url: searchUrl,
@@ -103,21 +113,57 @@ function onStaffPhoneJSON(data) {
   arrStaff = [];
 
   var results = data.d.query.PrimaryQueryResult.RelevantResults.Table.Rows.results;
-  if (results.length > 0) {
+  var numResults = results.length;
+  if (numResults > 0) {
+    numReady = 0;
+
+    // Prepare the Progressbar for update
+    var progressBar = $("#progress-phonelist");
+    if ($("div.progress").hasClass("hidden")) {
+      $("div.progress").removeClass("hidden");
+    }
+
     $.each(results, function(index, result) {
       var item = {
         'Name': result.Cells.results[2].Value,
-        'WorkPhone': (result.Cells.results[3].Value != null ? result.Cells.results[3].Value : ''),
-        'CellPhone': (result.Cells.results[4].Value != null ? result.Cells.results[4].Value : ''),
-        'HomePhone': (result.Cells.results[5].Value != null ? result.Cells.results[5].Value : '')
+        'WorkPhone': (result.Cells.results[4].Value != null ? result.Cells.results[4].Value : ''),
+        'CellPhone': '',
+        'HomePhone': ''
       };
 
       arrStaff.push(item);
+
+      var searchUrl = _spPageContextInfo.webAbsoluteUrl +
+        "/_api/sp.userprofiles.peoplemanager/getpropertiesfor(@v)?@v='" +
+        String(result.Cells.results[3].Value).replace(/'/g, "''") + "'";
+      $.ajax({
+        url: searchUrl,
+        type: "GET",
+        headers: {
+          "Accept": "application/json; odata=verbose"
+        },
+        indexValue: index,
+        total: numResults,
+        progressbar: progressBar,
+        success: function(data) {
+          arrStaff[index].CellPhone = data.d.UserProfileProperties.results[48].Value;
+          arrStaff[index].HomePhone = data.d.UserProfileProperties.results[50].Value;
+          progressBar.html("Getting phone numbers for " + numReady++ + " out of " + numResults + " Users.");
+          progressBar.attr("aria-valuenow", Math.ceil(numReady / numResults * 100) + "");
+          progressBar.attr("style", "width: " + Math.ceil(numReady / numResults * 100) + "%");
+          if (arrStaff.length == numReady) {
+            if (!$("div.progress").hasClass("hidden"))
+              $("div.progress").addClass("hidden");
+            refreshPhonebook();
+          }
+        },
+        error: onQueryFailedJSON
+      });
     });
 
-    refreshPhonebook();
+    console.log("arrStaff: " + arrStaff.length);
 
-  // No results were found.
+    // No results were found.
   } else {
     $("article.phonebook").html("Can't find any staff in the directory.");
   }

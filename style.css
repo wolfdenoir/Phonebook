@@ -4,10 +4,19 @@ article.phonebook {
   column-width: 200px;
 }
 
-article.phonebook div span:first-of-type  {
-  padding-right: 10px;
+article.phonebook div {
+  display: flex;
+  justify-content: space-between;
 }
 
-article.phonebook div span:last-of-type  {
+article.phonebook div div:first-of-type {
+  font-weight: bold;
+}
+
+article.phonebook div div:last-of-type {
   text-align: right;
+}
+
+div.progress {
+  width: 500px;
 }
