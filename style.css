@@ -9,11 +9,15 @@ article.phonebook div {
   justify-content: space-between;
 }
 
-article.phonebook div div:first-of-type {
+article.phonebook p {
+  margin: 0;
+}
+
+article.phonebook div p:first-of-type {
   font-weight: bold;
 }
 
-article.phonebook div div:last-of-type {
+article.phonebook div p:last-of-type {
   text-align: right;
 }
 

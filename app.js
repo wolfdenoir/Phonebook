@@ -45,23 +45,23 @@ function refreshPhonebook() {
     return;
 
   for (var i = 0; i < arrStaff.length; i++) {
-    if (arrStaff[i].CellPhone != null && arrStaff[i].CellPhone != '') {
+    if (arrStaff[i].CellPhone != '') {
       var cellphones = $("<div/>", {
-        html: '<div>' + arrStaff[i].Name + '</div><div>' + arrStaff[i].CellPhone + '</div>'
+        html: '<p>' + arrStaff[i].Name + '</p><p>' + arrStaff[i].CellPhone + '</p>'
       });
       $("#cellphone article.phonebook").append(cellphones);
     }
 
-    if (arrStaff[i].HomePhone != null && arrStaff[i].HomePhone != '') {
+    if (arrStaff[i].HomePhone != '') {
       var homephones = $("<div/>", {
-        html: '<div>' + arrStaff[i].Name + '</div><div>' + arrStaff[i].HomePhone + '</div>'
+        html: '<p>' + arrStaff[i].Name + '</p><p>' + arrStaff[i].HomePhone + '</p>'
       });
       $("#homephone article.phonebook").append(homephones);
     }
 
-    if (arrStaff[i].WorkPhone != null && arrStaff[i].WorkPhone != '') {
+    if (arrStaff[i].WorkPhone != '') {
       var workphones = $("<div/>", {
-        html: '<div>' + arrStaff[i].Name + '</div><div>' + arrStaff[i].WorkPhone + '</div>'
+        html: '<p>' + arrStaff[i].Name + '</p><p>' + arrStaff[i].WorkPhone + '</p>'
       });
       $("#workphone article.phonebook").append(workphones);
     }
@@ -146,8 +146,8 @@ function onStaffPhoneJSON(data) {
         total: numResults,
         progressbar: progressBar,
         success: function(data) {
-          arrStaff[index].CellPhone = data.d.UserProfileProperties.results[48].Value;
-          arrStaff[index].HomePhone = data.d.UserProfileProperties.results[50].Value;
+          arrStaff[index].CellPhone = (data.d.UserProfileProperties.results[48].Value != null ? data.d.UserProfileProperties.results[48].Value : '');
+          arrStaff[index].HomePhone = (data.d.UserProfileProperties.results[50].Value != null ? data.d.UserProfileProperties.results[50].Value : '');
           progressBar.html("Getting phone numbers for " + numReady++ + " out of " + numResults + " Users.");
           progressBar.attr("aria-valuenow", Math.ceil(numReady / numResults * 100) + "");
           progressBar.attr("style", "width: " + Math.ceil(numReady / numResults * 100) + "%");
@@ -161,7 +161,7 @@ function onStaffPhoneJSON(data) {
       });
     });
 
-    console.log("arrStaff: " + arrStaff.length);
+    //console.log("arrStaff: " + arrStaff.length);
 
     // No results were found.
   } else {
