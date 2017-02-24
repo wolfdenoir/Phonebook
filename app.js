@@ -1,14 +1,10 @@
 var _LOCAL_PEOPLE_RESULT_ID = 'B09A7990-05EA-4AF9-81EF-EDFAB16C4E31';
 var arrStaff = [];
-var prop;
 var context = new SP.ClientContext.get_current();
 var web = context.get_web();
 var user = web.get_currentUser();
 
 $(document).ready(function() {
-  // If the window has been resized
-  $(window).resize(function() {});
-
   context.load(user);
   context.executeQueryAsync(function() {
     console.log(user);
@@ -17,23 +13,6 @@ $(document).ready(function() {
     alert("Connection Failed. Refresh the page and try again. :(");
   });
 });
-
-function escapeURL(string) {
-  return String(string).replace(/[&<>\-'\/]/g, function(s) {
-    var entityMap = {
-      "&": "%26",
-      "<": "%3C",
-      ">": "%3E",
-      "-": "\\-",
-      "'": '%60',
-      "\\": "%5C",
-      "[": "%5B",
-      "]": "%5D"
-    };
-
-    return entityMap[s];
-  });
-}
 
 /**
   Reloads the phonebook page with new data
@@ -68,26 +47,9 @@ function refreshPhonebook() {
   }
 }
 
-function enableFields() {
-  $("#itin-main button, #itin-main input").removeClass("disabled");
-  $("#itin-splash button").removeClass("disabled");
-}
-
-function onQueryFailed(sender, args) {
-  console.log('Request failed.' + args.get_message() +
-    '\n' + args.get_stackTrace());
-}
-
-function onQueryFailedJSON(data, errorCode, errorMessage) {
-  if (data.responseJSON != null)
-    console.log(data.responseJSON.error.code + ': ' + data.responseJSON.error.message.value);
-  else
-    console.log(data);
-}
-
 // Get phone numbers of all staff
 function getStaffPhones() {
-  searchTerm = '(JobTitle:"Support" JobTitle:"Servicing")';
+  searchTerm = '(JobTitle:"Support" JobTitle:"Servicing" JobTitle:"Coordinator" JobTitle:"Director" JobTitle:"Executive" JobTitle:"President" JobTitle:"Treasurer")';
   searchUrl = _spPageContextInfo.webAbsoluteUrl +
     "/_api/search/query?querytext='" + searchTerm +
     "'&sortlist='PreferredName:ascending'&" +
@@ -146,8 +108,12 @@ function onStaffPhoneJSON(data) {
         total: numResults,
         progressbar: progressBar,
         success: function(data) {
-          arrStaff[index].CellPhone = (data.d.UserProfileProperties.results[48].Value != null ? data.d.UserProfileProperties.results[48].Value : '');
-          arrStaff[index].HomePhone = (data.d.UserProfileProperties.results[50].Value != null ? data.d.UserProfileProperties.results[50].Value : '');
+          if (typeof data.d.UserProfileProperties != 'undefined') {
+            arrStaff[index].CellPhone = (data.d.UserProfileProperties.results[48].Value != null ? data.d.UserProfileProperties.results[48].Value : '');
+            arrStaff[index].HomePhone = (data.d.UserProfileProperties.results[50].Value != null ? data.d.UserProfileProperties.results[50].Value : '');
+          } else {
+            console.log(arrStaff[index].Name + '\'s profile is missing.');
+          }
           progressBar.html("Getting phone numbers for " + numReady++ + " out of " + numResults + " Users.");
           progressBar.attr("aria-valuenow", Math.ceil(numReady / numResults * 100) + "");
           progressBar.attr("style", "width: " + Math.ceil(numReady / numResults * 100) + "%");
@@ -168,4 +134,11 @@ function onStaffPhoneJSON(data) {
     $("article.phonebook").html("Can't find any staff in the directory.");
   }
 
+}
+
+function onQueryFailedJSON(data, errorCode, errorMessage) {
+  if (data.responseJSON != null)
+    console.log(data.responseJSON.error.code + ': ' + data.responseJSON.error.message.value);
+  else
+    console.log(data);
 }
