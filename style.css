@@ -24,3 +24,9 @@ article.phonebook div p:last-of-type {
 div.progress {
   width: 500px;
 }
+
+@media print {
+  .nav>li:not(.active) {
+    display: none !important;
+  }
+}
