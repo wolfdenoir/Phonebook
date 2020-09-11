@@ -24,20 +24,6 @@ function refreshPhonebook() {
     return;
 
   for (var i = 0; i < arrStaff.length; i++) {
-    if (arrStaff[i].CellPhone != '') {
-      var cellphones = $("<div/>", {
-        html: '<p>' + arrStaff[i].Name + '</p><p>' + arrStaff[i].CellPhone + '</p>'
-      });
-      $("#cellphone article.phonebook").append(cellphones);
-    }
-
-    if (arrStaff[i].HomePhone != '') {
-      var homephones = $("<div/>", {
-        html: '<p>' + arrStaff[i].Name + '</p><p>' + arrStaff[i].HomePhone + '</p>'
-      });
-      $("#homephone article.phonebook").append(homephones);
-    }
-
     if (arrStaff[i].WorkPhone != '') {
       var workphones = $("<div/>", {
         html: '<p>' + arrStaff[i].Name + '</p><p>' + arrStaff[i].WorkPhone + '</p>'
@@ -51,11 +37,11 @@ function refreshPhonebook() {
 function getStaffPhones() {
   searchTerm = '(JobTitle:"Support" JobTitle:"Servicing" JobTitle:"Coordinator" JobTitle:"Director" JobTitle:"Executive" JobTitle:"President" JobTitle:"Treasurer")';
   searchUrl = _spPageContextInfo.webAbsoluteUrl +
-    "/_api/search/query?querytext='" + searchTerm +
-    "'&sortlist='PreferredName:ascending'&" +
-    "selectproperties='PreferredName,AccountName,WorkPhone'&" +
-    "sourceid='" + _LOCAL_PEOPLE_RESULT_ID + "'&" +
-    "rowlimit='400'";
+    "/_api/search/query?querytext='" + searchTerm + "'" +
+    //"&sortlist='PreferredName:ascending'" +
+    "&selectproperties='PreferredName,AccountName,WorkPhone'" +
+    "&sourceid='" + _LOCAL_PEOPLE_RESULT_ID + "'" +
+    "&rowlimit='400'";
 
   console.log(searchUrl);
 
@@ -97,7 +83,9 @@ function onStaffPhoneJSON(data) {
 
       var searchUrl = _spPageContextInfo.webAbsoluteUrl +
         "/_api/sp.userprofiles.peoplemanager/getpropertiesfor(@v)?@v='" +
-        String(result.Cells.results[3].Value).replace(/'/g, "''") + "'";
+        encodeURIComponent(String(result.Cells.results[3].Value).replace(/'/g, "''")) + "'";
+
+      //console.log(searchUrl);
       $.ajax({
         url: searchUrl,
         type: "GET",
@@ -109,8 +97,9 @@ function onStaffPhoneJSON(data) {
         progressbar: progressBar,
         success: function(data) {
           if (typeof data.d.UserProfileProperties != 'undefined') {
-            arrStaff[index].CellPhone = (data.d.UserProfileProperties.results[48].Value != null ? data.d.UserProfileProperties.results[48].Value : '');
-            arrStaff[index].HomePhone = (data.d.UserProfileProperties.results[50].Value != null ? data.d.UserProfileProperties.results[50].Value : '');
+            //console.log(data.d.UserProfileProperties.results);
+            arrStaff[index].CellPhone = (data.d.UserProfileProperties.results[52].Value != null ? data.d.UserProfileProperties.results[52].Value : '');
+            arrStaff[index].HomePhone = (data.d.UserProfileProperties.results[54].Value != null ? data.d.UserProfileProperties.results[54].Value : '');
           } else {
             console.log(arrStaff[index].Name + '\'s profile is missing.');
           }
